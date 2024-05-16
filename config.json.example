@@ -3,9 +3,11 @@
     "clientId": "your-client-ID",
     "system": "",
     "settings": {
+        "guildID": "",
+        "verificationChannel": "your-test-guild-verify-channel",
         "testGuild": {
-            "guildID": "",
-            "verificationChannel": ""
+            "guildID": "your-test-guild",
+            "verificationChannel": "your-test-guild-verify-channel"
         }
     }
 }
