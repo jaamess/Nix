@@ -28,7 +28,7 @@ async function sendVerificationEmbed(verificationChannel, client) {
         .setMaxValues(1)
         .setMinValues(1);
 
-    // Cria a linha de ação com o menu de seleção de usuário
+    // Cria a actionRow com o menu de seleção de usuário
     const row = new ActionRowBuilder()
         .addComponents(userSelectMenu);
 
