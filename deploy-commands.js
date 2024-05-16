@@ -1,46 +1,51 @@
+/* Este arquivo deve ser executado toda vez que você precisar
+*  registrar seus comandos na API do Discord. Se um comando novo
+*  não estiver aparecendo, rode esse script e atualize seu cliente.
+*/
+
 const { REST, Routes } = require('discord.js');
 const { clientId, token } = require('./config.json');
 const fs = require('node:fs');
 const path = require('node:path');
 
 const commands = [];
-// Grab all the command folders from the commands directory you created earlier
+// Pega todas as pastas de comandos do diretório de comandos que criamos anteriormente
 const foldersPath = path.join(__dirname, 'commands');
 const commandFolders = fs.readdirSync(foldersPath);
 
 for (const folder of commandFolders) {
-	// Grab all the command files from the commands directory you created earlier
+	// Pega todos os arquivos de comandos do diretório de comandos que criamos anteriormente
 	const commandsPath = path.join(foldersPath, folder);
 	const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.js'));
-	// Grab the SlashCommandBuilder#toJSON() output of each command's data for deployment
+	// Pega a saída toJSON() do SlashCommandBuilder# de cada comando
 	for (const file of commandFiles) {
 		const filePath = path.join(commandsPath, file);
 		const command = require(filePath);
 		if ('data' in command && 'execute' in command) {
 			commands.push(command.data.toJSON());
 		} else {
-			console.log(`[WARNING] The command at ${filePath} is missing a required "data" or "execute" property.`);
+			console.log(`[AVISO] O comando em ${filePath} está faltando uma propriedade "data" ou "execute" necessária.`);
 		}
 	}
 }
 
-// Construct and prepare an instance of the REST module
+// Constroi e prepara uma instância do módulo REST
 const rest = new REST().setToken(token);
 
-// and deploy your commands!
+// define e atualiza os comandos!
 (async () => {
 	try {
-		console.log(`Started refreshing ${commands.length} application (/) commands.`);
+		console.log(`Iniciada a atualização de ${commands.length} comandos de aplicação (/).`);
 
-		// The put method is used to fully refresh all commands in the guild with the current set
+		// O método put é usado para atualizar completamente todos os comandos na guilda com o conjunto atual
 		const data = await rest.put(
 			Routes.applicationCommands(clientId),
 			{ body: commands },
 		);
 
-		console.log(`Successfully reloaded ${data.length} application (/) commands.`);
+		console.log(`Recarreguei com sucesso ${data.length} comandos de aplicação (/).`);
 	} catch (error) {
-		// And of course, make sure you catch and log any errors!
+		// E claro, registramos os erros!
 		console.error(error);
 	}
 })();
