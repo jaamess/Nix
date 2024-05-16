@@ -1,6 +1,6 @@
 # Config File
 # You should create your own config file and ignore it here as well
-config.json
+./config.json
 
 # Logs
 logs
