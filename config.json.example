@@ -1,0 +1,11 @@
+{
+    "token": "",
+    "clientId": "your-client-ID",
+    "system": "",
+    "settings": {
+        "testGuild": {
+            "guildID": "",
+            "verificationChannel": ""
+        }
+    }
+}
