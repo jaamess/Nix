@@ -33,17 +33,6 @@ async function sendVerificationEmbed(client) {
             .setMaxValues(1)
             .setMinValues(1);
 
-        // Adiciona os usuários ao menu de seleção
-        const guildMembers = await verificationChannel.guild.members.fetch();
-        guildMembers.forEach(member => {
-            if (!member.user.bot) {
-                userSelectMenu.addOptions({
-                    label: member.user.username,
-                    value: member.user.id
-                });
-            }
-        });
-
         // Cria a actionRow com o menu de seleção de usuário
         const row = new ActionRowBuilder().addComponents(userSelectMenu);
 
@@ -63,64 +52,69 @@ async function sendVerificationEmbed(client) {
 
             // Verifica se a interação é do menu de seleção
             if (interaction.customId === 'send-verification') {
-                await interaction.reply({ content: 'Sua solicitação de verificação foi enviada!', ephemeral: true });
+                try {
+                    await interaction.deferUpdate(); // Defer the interaction to avoid "This interaction failed"
 
-                let userID = interaction.values[0];
-                let user = await client.users.fetch(userID);
+                    let userID = interaction.values[0];
+                    let user = await client.users.fetch(userID);
 
-                // Se o usuário não for encontrado, retorna
-                if (!user) {
-                    return;
-                }
-
-                // Cria o embed de verificação para o canal de administração
-                const verifyEmbed = new EmbedBuilder()
-                    .setTitle('Verificação')
-                    .setDescription(`Usuário: ${user.username}`)
-                    .addFields({
-                        name: 'Quem conhece?',
-                        value: `<@${user.id}> (${user.username})`,
-                        inline: true
-                    })
-                    .setColor('#ffffff');
-
-                // Cria botões para aprovação ou reprovação
-                let approveButton = new ButtonBuilder()
-                    .setStyle('Success')
-                    .setLabel('Aprovar')
-                    .setCustomId(`approve-${user.id}`);
-
-                let denyButton = new ButtonBuilder()
-                    .setStyle('Danger')
-                    .setLabel('Reprovar')
-                    .setCustomId(`deny-${user.id}`);
-
-                // Cria a linha de ação com os botões
-                const row2 = new ActionRowBuilder().addComponents([approveButton, denyButton]);
-
-                // Envia o embed de verificação com botões para o canal de administração
-                await adminChannel.send({
-                    content: `<@${user.id}> - ${user.toString()}`,
-                    embeds: [verifyEmbed],
-                    components: [row2]
-                });
-
-                // Coletor para os botões de aprovação/reprovação
-                const buttonCollector = adminChannel.createMessageComponentCollector({
-                    componentType: 'BUTTON',
-                    time: 15000 // 15 segundos para interação
-                });
-
-                buttonCollector.on('collect', async buttonInteraction => {
-                    if (buttonInteraction.customId === `approve-${user.id}`) {
-                        const member = await interaction.guild.members.fetch(userID);
-                        await member.roles.add(verifiedRoleID);
-                        await buttonInteraction.reply({ content: `O usuário <@${user.id}> foi aprovado e verificado com sucesso.`, ephemeral: true });
-                    } else if (buttonInteraction.customId === `deny-${user.id}`) {
-                        await user.send('Sua solicitação de verificação foi negada.');
-                        await buttonInteraction.reply({ content: `O usuário <@${user.id}> foi reprovado.`, ephemeral: true });
+                    // Se o usuário não for encontrado, retorna
+                    if (!user) {
+                        return console.log('User not found.');
                     }
-                });
+
+                    // Cria o embed de verificação para o canal de administração
+                    const verifyEmbed = new EmbedBuilder()
+                        .setTitle('Verificação')
+                        .setDescription(`Usuário: ${user.username}`)
+                        .addFields({
+                            name: 'Quem conhece?',
+                            value: `<@${user.id}> (${user.username})`,
+                            inline: true
+                        })
+                        .setColor('#ffffff');
+
+                    // Cria botões para aprovação ou reprovação
+                    let approveButton = new ButtonBuilder()
+                        .setStyle('Success')
+                        .setLabel('Aprovar')
+                        .setCustomId(`approve-${user.id}`);
+
+                    let denyButton = new ButtonBuilder()
+                        .setStyle('Danger')
+                        .setLabel('Reprovar')
+                        .setCustomId(`deny-${user.id}`);
+
+                    // Cria a linha de ação com os botões
+                    const row2 = new ActionRowBuilder().addComponents([approveButton, denyButton]);
+
+                    // Envia o embed de verificação com botões para o canal de administração
+                    await adminChannel.send({
+                        content: `<@${user.id}> - ${user.toString()}`,
+                        embeds: [verifyEmbed],
+                        components: [row2]
+                    });
+
+                    // Coletor para os botões de aprovação/reprovação
+                    const buttonCollector = adminChannel.createMessageComponentCollector({
+                        componentType: 'BUTTON',
+                        time: 15000 // 15 segundos para interação
+                    });
+
+                    buttonCollector.on('collect', async buttonInteraction => {
+                        if (buttonInteraction.customId === `approve-${user.id}`) {
+                            const member = await interaction.guild.members.fetch(userID);
+                            await member.roles.add(verifiedRoleID);
+                            await buttonInteraction.reply({ content: `O usuário <@${user.id}> foi aprovado e verificado com sucesso.`, ephemeral: true });
+                        } else if (buttonInteraction.customId === `deny-${user.id}`) {
+                            await user.send('Sua solicitação de verificação foi negada.');
+                            await buttonInteraction.reply({ content: `O usuário <@${user.id}> foi reprovado.`, ephemeral: true });
+                        }
+                    });
+                } catch (error) {
+                    console.error('Erro ao processar a interação:', error);
+                    await interaction.followUp({ content: 'Houve um erro ao processar sua solicitação.', ephemeral: true });
+                }
             }
         });
     } catch (error) {
